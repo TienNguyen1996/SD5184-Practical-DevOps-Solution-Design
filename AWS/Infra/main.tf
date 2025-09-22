@@ -1,12 +1,5 @@
-# main.tf
-# Define your resources here
-
-provider "aws" {
-  region = "us-east-1" # Free Tier eligible region
-}
-
-resource "aws_ecr_repository" "sd5184_repo" {
-  name                 = "sd5184-app-repo"
+resource "aws_ecr_repository" "repo" {
+  name                 = "${var.environment}-app-repo"
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
@@ -14,11 +7,11 @@ resource "aws_ecr_repository" "sd5184_repo" {
   }
 
   encryption_configuration {
-    encryption_type = "AES256" # Free default encryption
+    encryption_type = "AES256"
   }
 
   tags = {
-    Environment = "sd5184"
+    Environment = var.environment
     Terraform   = "true"
   }
 }

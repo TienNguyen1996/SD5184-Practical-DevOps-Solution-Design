@@ -1,2 +1,3 @@
-# providers.tf
-# Configure your providers here
+provider "aws" {
+  region = var.aws_region
+}
