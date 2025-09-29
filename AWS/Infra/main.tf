@@ -1,91 +1,32 @@
-data "aws_vpc" "default" {
-  default = true
+module "vpc" {
+  source     = "./modules/vpc"
+  cidr_block = var.vpc_cidr
+  azs        = var.availability_zones
 }
 
-resource "tls_private_key" "jenkins_key" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
+module "ec2" {
+  source        = "./modules/ec2"
+  subnet_ids    = module.vpc.public_subnets
+  vpc_id        = module.vpc.vpc_id
+  instance_type = var.instance_type
 }
 
-resource "aws_key_pair" "sd5184_key" {
-  key_name   = "${var.environment}-key"
-  public_key = tls_private_key.jenkins_key.public_key_openssh
+module "ecr" {
+  source    = "./modules/ecr"
+  repo_name = var.ecr_repo_name
 }
 
-resource "aws_security_group" "jenkins_sg" {
-  name        = "${var.environment}-jenkins-sg"
-  description = "Allow SSH and Jenkins access"
-  vpc_id      = data.aws_vpc.default.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+module "iam_node_role" {
+  source    = "./modules/iam-node-role"
+  role_name = "pi-sharp-node-role"
 }
 
-resource "aws_instance" "jenkins" {
-  ami                    = var.ami_id
-  instance_type          = "t2.micro"
-  key_name               = aws_key_pair.sd5184_key.key_name
-  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
-
-user_data = <<-EOF
-  #!/bin/bash
-  exec > /var/log/user-data.log 2>&1
-  set -x
-
-  yum update -y
-  amazon-linux-extras install epel -y
-  yum install -y java-17-amazon-corretto docker git
-  
-  systemctl enable docker
-  systemctl start docker
-  usermod -aG docker ec2-user
-
-  wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-  rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
-
-  yum install -y jenkins
-  systemctl enable jenkins
-  systemctl start jenkins
-EOF
-
-  tags = {
-    Name        = "${var.environment}-jenkins"
-    Environment = var.environment
-  }
-}
-
-resource "aws_ecr_repository" "repo" {
-  name                 = "${var.environment}-app-repo"
-  image_tag_mutability = "MUTABLE"
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-
-  encryption_configuration {
-    encryption_type = "AES256"
-  }
-
-  tags = {
-    Environment = var.environment
-    Terraform   = "true"
-  }
+module "eks" {
+  source           = "./modules/eks"
+  cluster_name     = var.cluster_name
+  subnet_ids       = module.vpc.private_subnets
+  vpc_id           = module.vpc.vpc_id
+  azs              = var.availability_zones
+  cluster_role_arn = var.cluster_role_arn
+  node_role_arn    = module.iam_node_role.node_role_arn
 }
