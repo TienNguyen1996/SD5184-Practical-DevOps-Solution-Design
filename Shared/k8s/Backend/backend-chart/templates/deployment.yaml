@@ -1,3 +1,11 @@
+{{- $dbHost := .Values.database.host | default (printf "%s-db" (include "backend.fullname" .)) -}}
+{{- $dbPort := .Values.database.port | default "5432" -}}
+{{- $dbName := .Values.database.name | default "appdb" -}}
+{{- $dbUser := .Values.database.username | default "appuser" -}}
+{{- $dbPass := .Values.database.password | default "secretpassword" -}}
+{{- $connStr := .Values.database.connectionString | default (printf "postgres://%s:%s@%s:%s/%s" $dbUser $dbPass $dbHost $dbPort $dbName) -}}
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,3 +26,45 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.containerPort }}
+          env:
+            - name: DATABASE_URL
+              value: {{ $connStr | quote }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "backend.fullname" . }}-db
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: {{ include "backend.fullname" . }}-db
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "backend.fullname" . }}-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "backend.fullname" . }}-db
+  template:
+    metadata:
+      labels:
+        app: {{ include "backend.fullname" . }}-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_DB
+              value: {{ $dbName }}
+            - name: POSTGRES_USER
+              value: {{ $dbUser }}
+            - name: POSTGRES_PASSWORD
+              value: {{ $dbPass }}
+          ports:
+            - containerPort: 5432
