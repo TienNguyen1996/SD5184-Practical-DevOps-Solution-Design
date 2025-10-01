@@ -12,4 +12,5 @@ service:
 containerPort: 3000
 
 backend:
-  apiUrl: http://backend:3000
+  apiUrl: http://backend.default.svc.cluster.local:3000
+
