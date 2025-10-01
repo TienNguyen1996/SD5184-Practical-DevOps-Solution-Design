@@ -1,9 +1,10 @@
-{{- $dbHost := .Values.database.host | default (printf "%s-db" (include "backend.fullname" .)) -}}
-{{- $dbPort := .Values.database.port | default "5432" -}}
-{{- $dbName := .Values.database.name | default "appdb" -}}
-{{- $dbUser := .Values.database.username | default "appuser" -}}
-{{- $dbPass := .Values.database.password | default "secretpassword" -}}
-{{- $connStr := .Values.database.connectionString | default (printf "postgres://%s:%s@%s:%s/%s" $dbUser $dbPass $dbHost $dbPort $dbName) -}}
+{{- $db := .Values.database | default dict -}}
+{{- $dbHost := (hasKey $db "host") | ternary $db.host (printf "%s-db" (include "backend.fullname" .)) -}}
+{{- $dbPort := (hasKey $db "port") | ternary $db.port "5432" -}}
+{{- $dbName := (hasKey $db "name") | ternary $db.name "appdb" -}}
+{{- $dbUser := (hasKey $db "username") | ternary $db.username "appuser" -}}
+{{- $dbPass := (hasKey $db "password") | ternary $db.password "secretpassword" -}}
+{{- $connStr := (hasKey $db "connectionString") | ternary $db.connectionString (printf "postgres://%s:%s@%s:%s/%s" $dbUser $dbPass $dbHost $dbPort $dbName) -}}
 
 ---
 apiVersion: apps/v1
@@ -36,10 +37,11 @@ kind: Service
 metadata:
   name: {{ include "backend.fullname" . }}-db
 spec:
-  ports:
-    - port: 5432
   selector:
     app: {{ include "backend.fullname" . }}-db
+  ports:
+    - port: 5432
+      targetPort: 5432
 
 ---
 apiVersion: apps/v1
