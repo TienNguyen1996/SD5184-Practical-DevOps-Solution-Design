@@ -35,3 +35,19 @@ variable "subnet_prefixes" {
   description = "CIDR blocks for the subnets"
   default     = ["10.0.1.0/24"]
 }
+
+# === START OF ADDITION: Variable for Subnet Delegation ===
+
+variable "subnet_delegations" {
+  description = "A list of delegation objects corresponding to subnets. Use null for a subnet that does not require delegation."
+  type = list(object({
+    # The Azure service name for delegation, e.g., 'Microsoft.ContainerService/managedClusters'
+    service_name = string 
+    # Optional list of actions for the service delegation (often not needed for standard AKS)
+    actions      = optional(list(string), []) 
+  }))
+  # Default is an empty list, assuming most subnets will not be delegated
+  default = []
+}
+
+# === END OF ADDITION ===

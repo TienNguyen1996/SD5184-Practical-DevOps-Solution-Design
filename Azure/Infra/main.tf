@@ -1,5 +1,13 @@
 provider "azurerm" {
   features {}
+  subscription_id               = "df7f2321-fcf2-42cb-a756-12033750249e"
+  resource_provider_registrations = "none" 
+}
+
+data "azurerm_client_config" "current" {}
+
+output "subscription_id" {
+  value = data.azurerm_client_config.current.subscription_id
 }
 
 resource "azurerm_resource_group" "main" {
@@ -24,15 +32,6 @@ module "nsg" {
   nsg_name            = "pi-sharp-nsg"
 }
 
-module "vm" {
-  source              = "./modules/vm"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = var.location
-  subnet_id           = module.vnet.subnet_ids[0]
-  nsg_id              = module.nsg.nsg_id
-  vm_name             = "pi-sharp-vm"
-}
-
 module "acr" {
   source              = "./modules/acr"
   resource_group_name = azurerm_resource_group.main.name
@@ -40,20 +39,19 @@ module "acr" {
   acr_name            = var.acr_name
 }
 
-module "aks_identity" {
-  source              = "./modules/aks-identity"
-  identity_name       = var.identity_name
-  resource_group_name = azurerm_resource_group.main.name
-  location            = var.location
-  subscription_id     = var.subscription_id
-}
-
 module "aks" {
-  source              = "./modules/aks"
-  cluster_name        = var.cluster_name
-  resource_group_name = azurerm_resource_group.main.name
-  location            = var.location
-  subnet_id           = module.vnet.subnet_ids[0]
-  identity_id         = module.aks_identity.identity_id
-  acr_id              = module.acr.acr_id
+  source                 = "./modules/aks"
+  cluster_name           = var.cluster_name
+  resource_group_name    = azurerm_resource_group.main.name
+  location               = var.location
+  subnet_id              = module.vnet.subnet_ids[0]
+  acr_id                 = module.acr.acr_id
+  dns_prefix             = var.dns_prefix
+  default_node_pool_name = var.default_node_pool_name
+  default_node_count     = var.default_node_count
+  default_vm_size        = var.default_vm_size
+  default_os_disk_size_gb = var.default_os_disk_size_gb
+  aks_service_cidr       = var.aks_service_cidr
+  aks_dns_service_ip     = var.aks_dns_service_ip
+  tags                   = var.tags
 }

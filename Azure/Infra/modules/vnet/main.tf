@@ -11,4 +11,17 @@ resource "azurerm_subnet" "subnets" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [var.subnet_prefixes[count.index]]
+
+  dynamic "delegation" {
+    for_each = try(var.subnet_delegations[count.index].service_name, "") != "" ? [var.subnet_delegations[count.index]] : []
+    
+    content {
+      name = "delegation"
+
+      service_delegation {
+        name    = delegation.value.service_name
+        actions = try(delegation.value.actions, []) 
+      }
+    }
+  }
 }
