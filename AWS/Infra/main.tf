@@ -16,9 +16,12 @@ module "ecr" {
   repo_name = var.ecr_repo_name
 }
 
-module "iam_node_role" {
-  source    = "./modules/iam-node-role"
-  role_name = "pi-sharp-node-role"
+module "iam" {
+  source            = "./modules/iam"
+  node_role_name    = var.node_role_name
+  cluster_role_name = var.cluster_role_name
+  aws_region        = var.aws_region
+  ecr_repo_name     = var.ecr_repo_name
 }
 
 module "eks" {
@@ -27,6 +30,6 @@ module "eks" {
   subnet_ids       = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
   azs              = var.availability_zones
-  cluster_role_arn = var.cluster_role_arn
-  node_role_arn    = module.iam_node_role.node_role_arn
+  cluster_role_arn = module.iam.cluster_role_arn
+  node_role_arn    = module.iam.node_role_arn
 }

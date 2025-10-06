@@ -1,3 +1,26 @@
+variable "aws_region" {
+  description = <<EOT
+AWS region where resources will be deployed.
+Examples: "us-east-1", "us-west-2", "ap-southeast-1"
+EOT
+
+  type    = string
+  default = "us-east-1"
+
+  validation {
+    condition = contains([
+      "us-east-1", "us-east-2", "us-west-1", "us-west-2",
+      "af-south-1", "ap-east-1", "ap-south-1", "ap-northeast-1",
+      "ap-northeast-2", "ap-northeast-3", "ap-southeast-1",
+      "ap-southeast-2", "ca-central-1", "eu-central-1",
+      "eu-west-1", "eu-west-2", "eu-west-3", "eu-north-1",
+      "eu-south-1", "me-south-1", "sa-east-1"
+    ], var.aws_region)
+
+    error_message = "Invalid AWS region. Please use a valid region code like 'us-east-1'."
+  }
+}
+
 variable "vpc_cidr" {
   description = "CIDR block for the VPC"
   type        = string
@@ -21,7 +44,7 @@ variable "availability_zones" {
 variable "ami_id" {
   description = "AMI ID for EC2 instance"
   type        = string
-  default     = "ami-0c55b159cbfafe1f0" # Example: Amazon Linux 2
+  default     = "ami-0c55b159cbfafe1f0"
   validation {
     condition     = length(var.ami_id) > 4
     error_message = "AMI ID must be a valid non-empty string."
@@ -50,12 +73,14 @@ variable "cluster_name" {
   default     = "pi-sharp-cluster"
 }
 
-variable "cluster_role_arn" {
-  description = "IAM role ARN for the EKS cluster"
+variable "node_role_name" {
+  description = "Name of the IAM role for EKS node group"
   type        = string
+  default     = "pi-sharp-node-role"
 }
 
-variable "node_role_arn" {
-  description = "IAM role ARN for the EKS node group"
+variable "cluster_role_name" {
+  description = "Name of the IAM role for EKS cluster"
   type        = string
+  default     = "pi-sharp-cluster-role"
 }

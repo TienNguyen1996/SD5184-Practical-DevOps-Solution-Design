@@ -13,11 +13,13 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-resource "aws_instance" "web" {
+resource "aws_instance" "jenkins" {
+  count         = var.enable_jenkins ? 1 : 0
   ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
   subnet_id     = element(var.subnet_ids, 0)
+
   tags = {
-    Name = "pi-sharp-ec2"
+    Name = "pi-sharp-jenkins"
   }
 }

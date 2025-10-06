@@ -25,3 +25,8 @@ variable "vpc_id" {
     error_message = "VPC ID must be a valid non-empty string."
   }
 }
+variable "enable_jenkins" {
+  description = "Whether to create the Jenkins EC2 instance"
+  type        = bool
+  default     = false
+}

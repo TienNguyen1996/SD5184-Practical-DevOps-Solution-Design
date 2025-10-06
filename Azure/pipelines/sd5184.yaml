@@ -5,7 +5,7 @@ pool:
   name: 'Azure Pipelines'
 
 variables:
-  repoUrl: 'https://github.com/nashtech-garage/kubernetes.git'
+  repoUrl: 'https://github.com/TienNguyen1996/sd5184-pisharp-app'
   repoName: 'kubernetes'
   tag: '$(Build.BuildId)'
 
