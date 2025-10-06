@@ -5,22 +5,17 @@ pool:
   name: 'Azure Pipelines'
 
 variables:
-  repoUrl: 'https://github.com/TienNguyen1996/sd5184-pisharp-app'
-  repoName: 'kubernetes'
   tag: '$(Build.BuildId)'
 
 steps:
-  # Clone the public GitHub repo
-  - script: |
-      git clone $(repoUrl)
-    displayName: 'Clone Public GitHub Repo'
-
-  # Build Frontend Docker Image
+  - checkout: self
+    displayName: 'Checkout GitHub Repository'
+    # Build Frontend Docker Image
   - task: Docker@2
     inputs:
       command: build
-      dockerfile: $(repoName)/src/frontend/Dockerfile
-      buildContext: $(repoName)/src/frontend
+      dockerfile: src/frontend/Dockerfile
+      buildContext: src/frontend
       tags: |
         frontend:$(tag)
 
@@ -38,8 +33,8 @@ steps:
   - task: Docker@2
     inputs:
       command: build
-      dockerfile: $(repoName)/src/backend/Dockerfile
-      buildContext: $(repoName)/src/backend
+      dockerfile: src/backend/Dockerfile
+      buildContext: src/backend
       tags: |
         backend:$(tag)
 
@@ -52,3 +47,4 @@ steps:
       target: 'backend:$(tag)'
       severities: 'HIGH, CRITICAL'
       publish: true
+
